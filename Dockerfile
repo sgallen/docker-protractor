@@ -1,41 +1,44 @@
-FROM debian:testing
+FROM debian:jessie
 
-ENV DEBIAN_FRONTEND noninteractive
-
-RUN apt-get update && \
-  apt-get install -y curl && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
-
-# ffmpeg is hosted at deb-multimedia.org
-RUN curl http://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2016.8.1_all.deb \
-  -o /tmp/deb-multimedia-keyring.deb && \  
-  dpkg -i /tmp/deb-multimedia-keyring.deb && \
-  rm /tmp/deb-multimedia-keyring.deb && \
-  echo "deb http://www.deb-multimedia.org stretch main non-free" >> /etc/apt/sources.list
-  
 RUN apt-get update && \
   apt-get install -y \
-    openjdk-8-jre \
+    curl \
+    gnupg \
+    apt-transport-https \
+    ca-certificates && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* && \
+  curl --fail -ssL -o setup-nodejs https://deb.nodesource.com/setup_7.x && \
+  bash setup-nodejs
+
+# ffmpeg is hosted at deb-multimedia.org
+# RUN curl http://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2016.8.1_all.deb \
+#   -o /tmp/deb-multimedia-keyring.deb && \
+#   dpkg -i /tmp/deb-multimedia-keyring.deb && \
+#   rm /tmp/deb-multimedia-keyring.deb && \
+#   echo "deb http://www.deb-multimedia.org stretch main non-free" >> /etc/apt/sources.list
+
+# Install jre-8
+RUN echo "deb http://ftp.debian.org/debian jessie-backports main" >> /etc/apt/sources.list.d/bp.list && \
+  apt-get update && \
+  apt-get -t jessie-backports install -y openjdk-8-jre
+
+RUN apt-get update && \
+  apt-get install -y \
+    build-essential \
+    nodejs \
     xvfb \
     libgconf-2-4 \
     libexif12 \
     chromium \
-    npm \
     supervisor \
-    netcat-traditional \
-    curl \
-    ffmpeg && \
+    netcat-traditional && \
+    # ffmpeg && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-RUN ln -s /usr/bin/nodejs /usr/bin/node
-
-# Upgrade NPM to latest (address issue #3)
-RUN npm install -g npm
-
 # Install Protractor
-RUN npm install -g protractor@4.0.4 
+RUN npm install -g protractor jasmine-reporters protractor-jasmine2-screenshot-reporter
 
 # Install Selenium and Chrome driver
 RUN webdriver-manager update
